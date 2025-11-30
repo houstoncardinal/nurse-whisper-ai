@@ -1,1 +1,4 @@
 project_id = "zupfyhboyykioxbokohv"
+
+[functions.generate-note]
+verify_jwt = true

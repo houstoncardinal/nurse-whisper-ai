@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Mic, FileText, Download, Settings, Stethoscope, Menu, User, BarChart3, BookOpen, Users, Shield, Brain, MessageSquare, Sparkles } from 'lucide-react';
 import { SimpleThemeToggle } from '@/components/ThemeToggle';
 import { SyntheticAI } from '@/components/SyntheticAI';
@@ -208,8 +207,6 @@ const createTemplateFallback = (template: string, transcript: string): NoteConte
 export function MVPApp() {
   console.log('MVPApp rendering...');
   
-  const navigate = useNavigate();
-  
   // Initialize hooks for real functionality
   const { user, profile, loading: authLoading, updateProfile: updateUserProfile, signOut } = useAuth();
   const { createNote } = useNotes();
@@ -355,14 +352,18 @@ export function MVPApp() {
               setFinalTranscript('');
               setTranscript('');
               
+              // Clear the service's accumulated transcript
+              advancedTranscriptionService.clearTranscript();
+              
               // Start recording timer
               const interval = setInterval(() => {
                 setRecordingTime(prev => prev + 1);
               }, 1000);
               setRecordingInterval(interval);
               
-              toast.success('🎤 Listening with Medical AI...', {
-                description: '6-layer accuracy enhancement active'
+              toast.success('🎤 Listening...', {
+                description: 'Speak clearly - AI is processing your words',
+                duration: 2000,
               });
             },
             onEnd: async () => {
@@ -375,17 +376,26 @@ export function MVPApp() {
                 setRecordingInterval(null);
               }
               
-              // Get the current transcript value (use state or check both sources)
-              const currentTranscript = finalTranscript || transcript;
-              console.log('📝 Current transcript on end:', currentTranscript);
-              console.log('📝 finalTranscript:', finalTranscript);
-              console.log('📝 transcript:', transcript);
+              // Get the accumulated transcript from the service
+              const currentTranscript = advancedTranscriptionService.getFinalTranscript();
+              console.log('📝 Final accumulated transcript:', currentTranscript);
+              console.log('📝 Transcript length:', currentTranscript.length);
+              
+              // Store in state for display
+              setTranscript(currentTranscript);
+              setFinalTranscript(currentTranscript);
               
               // Auto-generate note if we have a transcript
               if (currentTranscript && currentTranscript.trim()) {
-                console.log('🤖 Auto-generating note from transcript:', currentTranscript);
+                console.log('🤖 Auto-generating note from transcript');
                 console.log('🤖 Selected template:', selectedTemplate);
+                
+                // Show processing state
                 setIsProcessing(true);
+                toast.info('🤖 Generating note...', {
+                  description: `Creating ${selectedTemplate} note from your recording`,
+                  duration: 2000,
+                });
                 
                 try {
                   // Call real AI edge function
@@ -397,12 +407,21 @@ export function MVPApp() {
                     const fallbackContent = createTemplateFallback(selectedTemplate, currentTranscript);
                     setNoteContent(fallbackContent);
                     setEditedNoteContent(fallbackContent);
+                    
+                    toast.warning('⚠️ Using basic template', {
+                      description: 'AI unavailable - please review carefully'
+                    });
                   } else {
                     console.log('✅ AI generated content:', aiResult.content);
                     setNoteContent(aiResult.content);
                     setEditedNoteContent(aiResult.content);
                     
-                    // Save to database
+                    // Save to database in background
+                    toast.success('💾 Saving note...', {
+                      description: 'Your note is being saved',
+                      duration: 1000,
+                    });
+                    
                     try {
                       await createNote({
                         title: `${selectedTemplate} Note - ${new Date().toLocaleDateString()}`,
@@ -414,40 +433,52 @@ export function MVPApp() {
                       console.log('✅ Note saved to database');
                     } catch (dbError) {
                       console.error('Failed to save to database:', dbError);
-                      // Continue anyway - note is still usable
+                      toast.error('Failed to save note', {
+                        description: 'Note is still available for editing'
+                      });
                     }
+                    
+                    toast.success('🎯 Note Ready!', {
+                      description: `${selectedTemplate} note created successfully`,
+                      duration: 2000,
+                    });
                   }
                   
-                  toast.success('🎯 Note Generated!', {
-                    description: `${selectedTemplate} note created`
-                  });
-                  
-                  // Auto-navigate to draft
+                  // Auto-navigate to draft after short delay
                   setTimeout(() => {
+                    setIsProcessing(false);
                     handleNavigate('draft');
-                  }, 500);
+                  }, 1000);
                   
                 } catch (error: any) {
                   console.error('❌ AI generation failed:', error);
                   console.error('❌ Error details:', error.message, error.stack);
                   
-                  // Create fallback content even on error using currentTranscript
+                  // Create fallback content even on error
                   const fallbackContent = createTemplateFallback(selectedTemplate, currentTranscript);
-                  
                   setNoteContent(fallbackContent);
                   setEditedNoteContent(fallbackContent);
                   
-                  toast.warning('Note generated in basic mode', {
-                    description: 'AI enhancement unavailable - please review and edit'
+                  toast.warning('⚠️ Basic note created', {
+                    description: 'AI unavailable - please review and edit carefully',
+                    duration: 3000,
                   });
                   
                   // Still navigate to draft
                   setTimeout(() => {
+                    setIsProcessing(false);
                     handleNavigate('draft');
-                  }, 500);
+                  }, 1000);
                 } finally {
                   setIsProcessing(false);
                 }
+              } else {
+                // No transcript captured
+                console.warn('⚠️ No transcript captured');
+                toast.error('No speech detected', {
+                  description: 'Please try recording again',
+                });
+                setIsProcessing(false);
               }
             }
           });
@@ -1115,7 +1146,7 @@ export function MVPApp() {
               email: userProfile.email,
               isSignedIn: userProfile.isSignedIn
             }}
-            onSignIn={() => navigate('/auth')}
+            onSignIn={() => window.location.href = '/auth'}
             onSignOut={handleSignOut}
           />
 

@@ -8,14 +8,20 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-// Provide safe defaults if env vars aren't loaded yet
-const url = SUPABASE_URL || 'https://placeholder.supabase.co';
-const key = SUPABASE_PUBLISHABLE_KEY || 'placeholder-key';
+// Only create client if we have valid credentials
+// This prevents crashes during hot reload when env vars aren't loaded yet
+const hasValidCredentials = SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY;
 
-export const supabase = createClient<Database>(url, key, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
-  }
-});
+export const supabase = hasValidCredentials 
+  ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+      auth: {
+        storage: localStorage,
+        persistSession: true,
+        autoRefreshToken: true,
+      }
+    })
+  : createClient<Database>(
+      'https://placeholder.supabase.co', 
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTI4MDAsImV4cCI6MTk2MDc2ODgwMH0.M1knsxz9nI6W8rRXdmQFEWvVEYKp7X4lmEGJXCNrfPs',
+      { auth: { storage: localStorage, persistSession: false, autoRefreshToken: false } }
+    );

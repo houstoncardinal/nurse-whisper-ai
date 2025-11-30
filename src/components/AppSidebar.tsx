@@ -4,6 +4,7 @@ import {
   BookOpen, Users, Shield, Brain, History, Stethoscope,
   ChevronRight, Clock, TrendingUp, CheckCircle
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -37,6 +38,7 @@ interface AppSidebarProps {
       notesThisWeek: number;
     };
   };
+  onSignOut?: () => void;
 }
 
 const mainNavItems = [
@@ -62,7 +64,7 @@ const bottomItems = [
   { id: 'profile' as Screen, title: 'Profile', icon: User, badge: null },
 ];
 
-export function AppSidebar({ currentScreen, onNavigate, userProfile }: AppSidebarProps) {
+export function AppSidebar({ currentScreen, onNavigate, userProfile, onSignOut }: AppSidebarProps) {
   const { state } = useSidebar();
   const [expandedGroup, setExpandedGroup] = useState<string | null>('main');
 
@@ -215,6 +217,18 @@ export function AppSidebar({ currentScreen, onNavigate, userProfile }: AppSideba
             <NavItem key={item.id} item={item} />
           ))}
         </SidebarMenu>
+        
+        {onSignOut && !collapsed && (
+          <div className="px-4 pt-3">
+            <Button 
+              variant="outline" 
+              className="w-full text-xs"
+              onClick={onSignOut}
+            >
+              Sign Out
+            </Button>
+          </div>
+        )}
         
         {!collapsed && (
           <div className="px-4 pt-3">

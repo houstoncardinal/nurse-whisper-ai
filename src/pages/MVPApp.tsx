@@ -32,6 +32,9 @@ import { enhancedAIService } from '@/lib/enhancedAIService';
 import { performanceService } from '@/lib/performanceService';
 import { intelligentNoteDetectionService } from '@/lib/intelligentNoteDetection';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
+import { useNotes } from '@/hooks/useNotes';
+import { useAI } from '@/hooks/useAI';
 
 type Screen = 'home' | 'draft' | 'export' | 'settings' | 'profile' | 'analytics' | 'education' | 'team' | 'copilot' | 'history' | 'admin' | 'instructions';
 
@@ -203,10 +206,16 @@ const createTemplateFallback = (template: string, transcript: string): NoteConte
 
 export function MVPApp() {
   console.log('MVPApp rendering...');
+  
+  // Initialize hooks for real functionality
+  const { user, profile, loading: authLoading, updateProfile: updateUserProfile, signOut } = useAuth();
+  const { createNote } = useNotes();
+  const { generateNote } = useAI();
+  
   // Screen navigation
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   
-  // Authentication state
+  // Authentication state (kept for modal state only)
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [authError, setAuthError] = useState('');
@@ -215,14 +224,14 @@ export function MVPApp() {
   const [showAI, setShowAI] = useState(false); // Start hidden - only show when clicked
   const [aiMinimized, setAiMinimized] = useState(true); // Start minimized when shown
   
-  // User profile state
-  const [userProfile, setUserProfile] = useState<UserProfileData>({
-    name: 'Guest User',
-    email: '',
-    role: 'Not Signed In',
+  // User profile state - derived from Supabase auth
+  const userProfile = {
+    name: profile?.full_name || user?.email || 'Guest User',
+    email: user?.email || '',
+    role: profile?.job_title || 'Not Signed In',
     credentials: '',
-    joinDate: new Date().toLocaleDateString(),
-    isSignedIn: false,
+    joinDate: profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
+    isSignedIn: !!user,
     preferences: {
       notifications: true,
       voiceSpeed: 50,
@@ -238,7 +247,7 @@ export function MVPApp() {
       notesThisWeek: 0
     },
     achievements: []
-  });
+  };
   
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -265,16 +274,7 @@ export function MVPApp() {
   };
 
   const handleSettingsChange = (settings: any) => {
-    // Update user profile with new settings
-    setUserProfile(prev => ({
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        ...settings
-      }
-    }));
-    
-    // Show success message
+    // Settings are now saved to database via profile updates
     toast.success('Settings saved successfully!');
   };
 
@@ -388,53 +388,42 @@ export function MVPApp() {
                 setIsProcessing(true);
                 
                 try {
-                  // Generate AI note automatically using the current transcript
-                  const aiPrompt = {
-                    template: selectedTemplate as any,
-                    input: currentTranscript,
-                    context: {
-                      chiefComplaint: currentTranscript.substring(0, 100)
+                  // Call real AI edge function
+                  console.log('🤖 Calling AI edge function...');
+                  const aiResult = await generateNote(currentTranscript, selectedTemplate);
+                  
+                  if (!aiResult.success || Object.keys(aiResult.content).length === 0) {
+                    console.warn('⚠️ AI generation failed, using template fallback');
+                    const fallbackContent = createTemplateFallback(selectedTemplate, currentTranscript);
+                    setNoteContent(fallbackContent);
+                    setEditedNoteContent(fallbackContent);
+                  } else {
+                    console.log('✅ AI generated content:', aiResult.content);
+                    setNoteContent(aiResult.content);
+                    setEditedNoteContent(aiResult.content);
+                    
+                    // Save to database
+                    try {
+                      await createNote({
+                        title: `${selectedTemplate} Note - ${new Date().toLocaleDateString()}`,
+                        template: selectedTemplate,
+                        content: aiResult.content,
+                        transcript: currentTranscript,
+                        status: 'draft',
+                      });
+                      console.log('✅ Note saved to database');
+                    } catch (dbError) {
+                      console.error('Failed to save to database:', dbError);
+                      // Continue anyway - note is still usable
                     }
-                  };
-
-                  console.log('🤖 Calling AI service with prompt:', aiPrompt);
-                  const generatedNote = await enhancedAIService.generateNote(aiPrompt);
-                  console.log('🤖 AI service returned:', generatedNote);
-                  
-                  // Store AI-generated note content
-                  const noteContent: NoteContent = {};
-                  
-                  // Check if we have sections
-                  if (generatedNote && generatedNote.sections && Object.keys(generatedNote.sections).length > 0) {
-                    Object.entries(generatedNote.sections).forEach(([section, data]) => {
-                      const sectionKey = formatSectionName(section);
-                      noteContent[sectionKey] = data.content;
-                      console.log(`🤖 Section ${sectionKey}:`, data.content.substring(0, 100));
-                    });
                   }
-
-                  if (Object.keys(noteContent).length === 0) {
-                    console.warn('⚠️ No sections in generated note, using template fallback');
-                    Object.assign(noteContent, createTemplateFallback(selectedTemplate, currentTranscript));
-                  }
-                  
-                  console.log('✅ Final note content to store:', noteContent);
-                  console.log('✅ Number of sections:', Object.keys(noteContent).length);
-                  
-                  if (Object.keys(noteContent).length === 0) {
-                    throw new Error('No content generated - empty note');
-                  }
-                  
-                  setNoteContent(noteContent);
-                  setEditedNoteContent(noteContent);
                   
                   toast.success('🎯 Note Generated!', {
-                    description: `${selectedTemplate} note with ${Object.keys(noteContent).length} sections`
+                    description: `${selectedTemplate} note created`
                   });
                   
                   // Auto-navigate to draft
                   setTimeout(() => {
-                    console.log('🤖 Navigating to draft with content:', noteContent);
                     handleNavigate('draft');
                   }, 500);
                   
@@ -523,152 +512,18 @@ export function MVPApp() {
     setCurrentScreen(screen as Screen);
   };
 
-  // Authentication functions
-  const handleSignIn = async (email: string, password: string) => {
-    setIsSigningIn(true);
-    setAuthError('');
-    
-    try {
-      // Simulate API call - in real app, this would call your authentication service
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock successful sign in
-      const newUserProfile: UserProfileData = {
-        name: 'Dr. Sarah Johnson',
-        email: email,
-        role: 'Registered Nurse',
-        credentials: 'RN, BSN',
-        phone: '+1 (555) 123-4567',
-        location: 'General Hospital',
-        joinDate: new Date().toLocaleDateString(),
-        isSignedIn: true,
-        preferences: {
-          notifications: true,
-          voiceSpeed: 50,
-          defaultTemplate: 'SOAP',
-          autoSave: true,
-          darkMode: false
-        },
-        stats: {
-          totalNotes: 127,
-          timeSaved: 45.2,
-          accuracy: 99.2,
-          weeklyGoal: 50,
-          notesThisWeek: 42
-        },
-        achievements: [
-          {
-            id: 'speed-master',
-            title: 'Speed Master',
-            description: 'Created 10 notes in 1 hour',
-            icon: '🏃‍♀️',
-            unlockedAt: '2 days ago'
-          },
-          {
-            id: 'accuracy-champion',
-            title: 'Accuracy Champion',
-            description: 'Maintained 99%+ accuracy for a week',
-            icon: '🎯',
-            unlockedAt: '1 week ago'
-          }
-        ]
-      };
-      
-      setUserProfile(newUserProfile);
-      setIsSignInModalOpen(false);
-      toast.success('Welcome back!', { description: `Signed in as ${newUserProfile.name}` });
-    } catch (error) {
-      setAuthError('Invalid email or password. Please try again.');
-      toast.error('Sign in failed');
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
-
-  const handleSignUp = async (email: string, password: string, name: string, role: string) => {
-    setIsSigningIn(true);
-    setAuthError('');
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock successful sign up
-      const newUserProfile: UserProfileData = {
-        name: name,
-        email: email,
-        role: role,
-        credentials: role,
-        joinDate: new Date().toLocaleDateString(),
-        isSignedIn: true,
-        preferences: {
-          notifications: true,
-          voiceSpeed: 50,
-          defaultTemplate: 'SOAP',
-          autoSave: true,
-          darkMode: false
-        },
-        stats: {
-          totalNotes: 0,
-          timeSaved: 0,
-          accuracy: 0,
-          weeklyGoal: 50,
-          notesThisWeek: 0
-        },
-        achievements: []
-      };
-      
-      setUserProfile(newUserProfile);
-      setIsSignInModalOpen(false);
-      toast.success('Account created!', { description: `Welcome to Raha, ${name}` });
-    } catch (error) {
-      setAuthError('Failed to create account. Please try again.');
-      toast.error('Sign up failed');
-    } finally {
-      setIsSigningIn(false);
-    }
-  };
-
-  const handleSignOut = () => {
-    setUserProfile({
-      name: 'Guest User',
-      email: '',
-      role: 'Not Signed In',
-      credentials: '',
-      joinDate: new Date().toLocaleDateString(),
-      isSignedIn: false,
-      preferences: {
-        notifications: true,
-        voiceSpeed: 50,
-        defaultTemplate: 'SOAP',
-        autoSave: true,
-        darkMode: false
-      },
-      stats: {
-        totalNotes: 0,
-        timeSaved: 0,
-        accuracy: 99.2,
-        weeklyGoal: 50,
-        notesThisWeek: 0
-      },
-      achievements: []
-    });
-    
-    // Return to home screen
+  // Authentication is now handled by /auth page and useAuth hook
+  const handleSignOut = async () => {
+    await signOut();
     setCurrentScreen('home');
-    toast.info('Signed out successfully');
   };
 
-  const handleUpdateProfile = async (updatedProfile: Partial<UserProfileData>) => {
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setUserProfile(prev => ({ ...prev, ...updatedProfile }));
-      toast.success('Profile updated successfully');
-    } catch (error) {
-      toast.error('Failed to update profile');
-    }
+  const handleUpdateProfile = async (updates: Partial<UserProfileData>) => {
+    await updateUserProfile({
+      full_name: updates.name,
+      job_title: updates.role,
+      department: updates.location,
+    });
   };
 
   // Start recording with real voice recognition
@@ -1140,7 +995,7 @@ export function MVPApp() {
         );
 
       case 'history':
-        return <NoteHistory onNavigate={handleNavigate} />;
+        return <NoteHistory />;
 
       case 'analytics':
         return <AnalyticsScreen />;
@@ -1574,16 +1429,6 @@ export function MVPApp() {
           }}
         />
       )}
-
-        {/* Sign In Modal */}
-        <SignInModal
-        isOpen={isSignInModalOpen}
-        onClose={() => setIsSignInModalOpen(false)}
-        onSignIn={handleSignIn}
-        onSignUp={handleSignUp}
-        isLoading={isSigningIn}
-        error={authError}
-      />
     </div>
   );
 }

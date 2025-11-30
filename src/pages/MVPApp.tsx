@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Mic, FileText, Download, Settings, Stethoscope, Menu, User, BarChart3, BookOpen, Users, Shield, Brain, MessageSquare, Sparkles } from 'lucide-react';
 import { SimpleThemeToggle } from '@/components/ThemeToggle';
 import { SyntheticAI } from '@/components/SyntheticAI';
@@ -7,13 +8,13 @@ import { MobileBottomToolbar } from '@/components/MobileBottomToolbar';
 import { SimpleMobileHeader } from '@/components/SimpleMobileHeader';
 import { EnhancedMobileHeader } from '@/components/EnhancedMobileHeader';
 import { PowerfulHeader } from '@/components/PowerfulHeader';
-import { AppSidebar } from '@/components/AppSidebar';
+import { AppSidebarWrapper } from '@/components/AppSidebarWrapper';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { MVPHomeScreen } from '@/components/MVPHomeScreen';
 import { MVPDraftScreen } from '@/components/MVPDraftScreen';
 import { MVPExportScreen } from '@/components/MVPExportScreen';
 import { MVPSettingsScreen } from '@/components/MVPSettingsScreen';
-import { SignInModal } from '@/components/SignInModal';
+
 import { UserProfile } from '@/components/UserProfile';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -207,6 +208,8 @@ const createTemplateFallback = (template: string, transcript: string): NoteConte
 export function MVPApp() {
   console.log('MVPApp rendering...');
   
+  const navigate = useNavigate();
+  
   // Initialize hooks for real functionality
   const { user, profile, loading: authLoading, updateProfile: updateUserProfile, signOut } = useAuth();
   const { createNote } = useNotes();
@@ -216,9 +219,6 @@ export function MVPApp() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   
   // Authentication state (kept for modal state only)
-  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
-  const [isSigningIn, setIsSigningIn] = useState(false);
-  const [authError, setAuthError] = useState('');
   
   // AI Assistant state
   const [showAI, setShowAI] = useState(false); // Start hidden - only show when clicked
@@ -1025,266 +1025,24 @@ export function MVPApp() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 overflow-x-hidden">
       {/* Desktop Layout */}
       <div className="hidden lg:block overflow-x-hidden">
-        <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 overflow-x-hidden">
-          {/* Desktop Sidebar - Compact */}
-          <aside className="w-64 bg-white/95 backdrop-blur-xl border-r border-slate-200 shadow-xl">
-              <div className="flex flex-col h-full">
-                {/* Logo Section - Modern & Professional */}
-                <div className="p-6 border-b border-slate-200/80 bg-gradient-to-br from-slate-50/50 to-white">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-teal-500 via-teal-600 to-blue-600 rounded-xl flex items-center justify-center shadow-xl shadow-teal-500/30 ring-1 ring-white/20">
-                      <Stethoscope className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h1 className="text-xl font-bold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text text-transparent tracking-tight">
-                        Raha
-                      </h1>
-                      <p className="text-xs font-medium text-slate-500 tracking-wide uppercase">
-                        Charting Made Gentle
-                      </p>
-                    </div>
-                  </div>
-                </div>
+        <SidebarProvider>
+          <div className="flex h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 overflow-x-hidden w-full">
+            {/* Desktop Sidebar with Real Data */}
+            <AppSidebarWrapper
+              currentScreen={currentScreen}
+              onNavigate={handleNavigate}
+            />
 
-                {/* User Profile Section - Compact */}
-                <div className="p-3 border-b border-slate-200">
-                  <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
-                    <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-blue-600 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold text-xs">
-                        {userProfile.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-slate-900 truncate">{userProfile.name}</p>
-                      <p className="text-xs text-slate-600 truncate">{userProfile.role}</p>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleNavigate('profile')}
-                      className="h-6 w-6 p-0"
-                    >
-                      <Settings className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Main Navigation - Modern & Professional */}
-                <div className="flex-1 p-4 overflow-y-auto">
-                  <nav className="space-y-6">
-                    {/* Core Section */}
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">Core Features</h3>
-                      <div className="space-y-1">
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'home'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('home')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'home' ? 'opacity-100' : ''}`} />
-                          <Mic className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'home' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">New Note</span>
-                          {currentScreen === 'home' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'draft'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('draft')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'draft' ? 'opacity-100' : ''}`} />
-                          <FileText className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'draft' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">Draft Preview</span>
-                          {currentScreen === 'draft' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'export'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('export')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'export' ? 'opacity-100' : ''}`} />
-                          <Download className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'export' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">Export</span>
-                          {currentScreen === 'export' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Advanced Tools Section */}
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">Advanced Tools</h3>
-                      <div className="space-y-1">
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'history'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('history')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'history' ? 'opacity-100' : ''}`} />
-                          <FileText className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'history' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">Note History</span>
-                          {currentScreen === 'history' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'analytics'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('analytics')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'analytics' ? 'opacity-100' : ''}`} />
-                          <BarChart3 className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'analytics' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">Analytics</span>
-                          {currentScreen === 'analytics' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'education'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('education')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'education' ? 'opacity-100' : ''}`} />
-                          <BookOpen className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'education' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">Education</span>
-                          {currentScreen === 'education' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'team'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('team')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'team' ? 'opacity-100' : ''}`} />
-                          <Users className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'team' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">Team</span>
-                          {currentScreen === 'team' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'copilot'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('copilot')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'copilot' ? 'opacity-100' : ''}`} />
-                          <Brain className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'copilot' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">AI Copilot</span>
-                          {currentScreen === 'copilot' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Account Section */}
-                    <div>
-                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 px-2">Account</h3>
-                      <div className="space-y-1">
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'profile'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('profile')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'profile' ? 'opacity-100' : ''}`} />
-                          <User className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'profile' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">Profile</span>
-                          {currentScreen === 'profile' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          className={`w-full justify-start h-11 text-sm font-medium transition-all duration-200 group relative overflow-hidden ${
-                            currentScreen === 'settings'
-                              ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/25 border border-teal-400/20'
-                              : 'text-slate-700 hover:text-teal-700 hover:bg-gradient-to-r hover:from-teal-50 hover:to-blue-50 border border-transparent hover:border-teal-200/50'
-                          }`}
-                          onClick={() => handleNavigate('settings')}
-                        >
-                          <div className={`absolute inset-0 bg-gradient-to-r from-teal-400/10 to-blue-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ${currentScreen === 'settings' ? 'opacity-100' : ''}`} />
-                          <Settings className={`h-4 w-4 mr-3 transition-colors duration-200 ${currentScreen === 'settings' ? 'text-white' : 'text-teal-600 group-hover:text-teal-700'}`} />
-                          <span className="relative z-10">Settings</span>
-                          {currentScreen === 'settings' && (
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-white rounded-full" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </nav>
-                </div>
-
-                {/* Bottom Actions */}
-                <div className="p-3 border-t border-slate-200">
-                  <Button
-                    onClick={handleNewNote}
-                    className="w-full bg-[#6dbda9] hover:bg-[#5ba08c] text-white shadow-lg h-9 text-sm"
-                  >
-                    <Mic className="h-4 w-4 mr-2" />
-                    Start New Note
-                  </Button>
-                  {!userProfile.isSignedIn && (
-                    <Button
-                      onClick={() => setIsSignInModalOpen(true)}
-                      variant="outline"
-                      className="w-full mt-2 h-8 text-sm"
-                    >
-                      Sign In
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </aside>
-
-          {/* Desktop Main Content */}
-          <div className="flex-1 flex flex-col overflow-x-hidden">
+            {/* Desktop Main Content */}
+            <div className="flex-1 flex flex-col overflow-x-hidden">
             {/* Desktop Header */}
             <header className="bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-sm">
               <div className="px-8 py-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-3xl font-bold text-slate-900">
+                <div className="flex items-center justify-between gap-4">
+                  <SidebarTrigger className="-ml-2" />
+                  <div className="flex-1">
+                    <div>
+                      <h2 className="text-3xl font-bold text-slate-900">
                       {currentScreen === 'home' && 'Start New Note'}
                       {currentScreen === 'draft' && 'Draft Preview'}
                       {currentScreen === 'export' && 'Export Note'}
@@ -1295,8 +1053,8 @@ export function MVPApp() {
                       {currentScreen === 'education' && 'Education Mode'}
                       {currentScreen === 'team' && 'Team Collaboration'}
                       {currentScreen === 'copilot' && 'AI Nurse Copilot'}
-                    </h2>
-                    <p className="text-slate-600 mt-1">
+                      </h2>
+                      <p className="text-slate-600 mt-1">
                       {currentScreen === 'home' && 'Create professional nursing documentation with AI assistance'}
                       {currentScreen === 'draft' && 'Review and edit your AI-generated note'}
                       {currentScreen === 'export' && 'Save and share your completed note'}
@@ -1307,7 +1065,8 @@ export function MVPApp() {
                       {currentScreen === 'education' && 'Practice with synthetic cases and improve your skills'}
                       {currentScreen === 'team' && 'Collaborate and share notes with your team'}
                       {currentScreen === 'copilot' && 'AI-powered care planning, bedside assist, and predictive insights'}
-                    </p>
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-4">
                     {/* Status Indicators */}
@@ -1336,8 +1095,9 @@ export function MVPApp() {
             <main className="flex-1 overflow-y-auto overflow-x-hidden">
               {renderCurrentScreen()}
             </main>
+            </div>
           </div>
-        </div>
+        </SidebarProvider>
       </div>
 
       {/* Mobile/Tablet Layout */}
@@ -1355,7 +1115,7 @@ export function MVPApp() {
               email: userProfile.email,
               isSignedIn: userProfile.isSignedIn
             }}
-            onSignIn={() => setIsSignInModalOpen(true)}
+            onSignIn={() => navigate('/auth')}
             onSignOut={handleSignOut}
           />
 

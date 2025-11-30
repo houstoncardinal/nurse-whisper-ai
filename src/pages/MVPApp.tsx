@@ -1478,10 +1478,8 @@ export function MVPApp() {
             </header>
 
             {/* Desktop Content */}
-            <main className="flex-1 overflow-x-hidden overflow-y-hidden">
-              <div className="h-full overflow-x-hidden">
-                {renderCurrentScreen()}
-              </div>
+            <main className="flex-1 overflow-y-auto overflow-x-hidden">
+              {renderCurrentScreen()}
             </main>
           </div>
         </div>

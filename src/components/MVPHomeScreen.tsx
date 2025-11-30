@@ -156,6 +156,23 @@ export function MVPHomeScreen({
                     </p>
                   </div>
                 )}
+                
+                {isProcessing && !isRecording && (
+                  <div className="w-full animate-fade-in">
+                    <div className="bg-primary/10 rounded-lg px-4 py-3 text-center space-y-2">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                        <p className="text-sm font-medium text-primary">
+                          Generating your {selectedTemplate} note...
+                        </p>
+                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        AI is processing your recording
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {!voiceSupported && (
                   <Alert className="w-full">
@@ -333,6 +350,23 @@ export function MVPHomeScreen({
                     <div className="bg-muted/50 rounded-lg px-6 py-4">
                       <p className="text-sm text-foreground/80">
                         {visibleInterimTranscript}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {isProcessing && !isRecording && (
+                  <div className="flex-1 max-w-xl animate-fade-in">
+                    <div className="bg-primary/10 rounded-lg px-6 py-4 text-center space-y-2">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
+                        <p className="text-sm font-medium text-primary">
+                          Generating your {selectedTemplate} note...
+                        </p>
+                        <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        AI is analyzing your recording and creating a professional note
                       </p>
                     </div>
                   </div>

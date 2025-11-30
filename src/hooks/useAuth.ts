@@ -21,6 +21,15 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check if Supabase is properly configured
+    const hasSupabase = import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    
+    if (!hasSupabase) {
+      console.warn('Supabase not configured - running in offline mode');
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -49,6 +58,12 @@ export function useAuth() {
 
   const loadProfile = async (userId: string) => {
     try {
+      // Check if Supabase is available
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -67,6 +82,12 @@ export function useAuth() {
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!user) return;
+    
+    // Check if Supabase is available
+    if (!import.meta.env.VITE_SUPABASE_URL) {
+      toast.error('Database not available');
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -86,6 +107,12 @@ export function useAuth() {
   };
 
   const signOut = async () => {
+    // Check if Supabase is available
+    if (!import.meta.env.VITE_SUPABASE_URL) {
+      toast.info('No active session');
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;

@@ -8,7 +8,11 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+// Provide safe defaults if env vars aren't loaded yet
+const url = SUPABASE_URL || 'https://placeholder.supabase.co';
+const key = SUPABASE_PUBLISHABLE_KEY || 'placeholder-key';
+
+export const supabase = createClient<Database>(url, key, {
   auth: {
     storage: localStorage,
     persistSession: true,

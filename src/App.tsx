@@ -7,6 +7,8 @@ import Index from "./pages/Index";
 // import { MVPApp } from "./pages/MVPApp";
 import { LandingPage } from "./pages/LandingPage";
 import NotFound from "./pages/NotFound";
+import Auth from "./pages/Auth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
 import { EducationMode } from "@/components/EducationMode";
 import { AdminDashboard } from "@/components/AdminDashboard";
@@ -193,10 +195,15 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Suspense fallback={null}><MVPAppLazy /></Suspense>} />
-          <Route path="/full" element={<Index />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Suspense fallback={null}><MVPAppLazy /></Suspense>
+            </ProtectedRoute>
+          } />
+          <Route path="/full" element={<ProtectedRoute><Index /></ProtectedRoute>} />
           <Route path="/landing" element={<LandingPage />} />
-          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

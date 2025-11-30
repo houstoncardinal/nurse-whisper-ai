@@ -14,16 +14,283 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: Database["public"]["Enums"]["audit_action"]
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown
+          organization_id: string | null
+          resource_id: string | null
+          resource_type: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["audit_action"]
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          organization_id?: string | null
+          resource_id?: string | null
+          resource_type: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["audit_action"]
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          organization_id?: string | null
+          resource_id?: string | null
+          resource_type?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      note_versions: {
+        Row: {
+          change_summary: string | null
+          changed_by: string
+          content: Json
+          created_at: string
+          id: string
+          note_id: string
+          version_number: number
+        }
+        Insert: {
+          change_summary?: string | null
+          changed_by: string
+          content: Json
+          created_at?: string
+          id?: string
+          note_id: string
+          version_number: number
+        }
+        Update: {
+          change_summary?: string | null
+          changed_by?: string
+          content?: Json
+          created_at?: string
+          id?: string
+          note_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "note_versions_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          content: Json
+          created_at: string
+          finalized_at: string | null
+          icd10_codes: Json | null
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          status: Database["public"]["Enums"]["note_status"]
+          template: string
+          title: string
+          transcript: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          finalized_at?: string | null
+          icd10_codes?: Json | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          status?: Database["public"]["Enums"]["note_status"]
+          template: string
+          title: string
+          transcript?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          finalized_at?: string | null
+          icd10_codes?: Json | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          status?: Database["public"]["Enums"]["note_status"]
+          template?: string
+          title?: string
+          transcript?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          settings: Json | null
+          subdomain: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          settings?: Json | null
+          subdomain?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          settings?: Json | null
+          subdomain?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          department: string | null
+          email: string
+          full_name: string | null
+          id: string
+          job_title: string | null
+          organization_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          job_title?: string | null
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          department?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          job_title?: string | null
+          organization_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          created_at: string
+          id: string
+          preferences: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          preferences?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          preferences?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "nurse" | "viewer"
+      audit_action: "create" | "read" | "update" | "delete" | "export"
+      note_status: "draft" | "finalized" | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +417,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "nurse", "viewer"],
+      audit_action: ["create", "read", "update", "delete", "export"],
+      note_status: ["draft", "finalized", "archived"],
+    },
   },
 } as const

@@ -7,6 +7,8 @@ import { MobileBottomToolbar } from '@/components/MobileBottomToolbar';
 import { SimpleMobileHeader } from '@/components/SimpleMobileHeader';
 import { EnhancedMobileHeader } from '@/components/EnhancedMobileHeader';
 import { PowerfulHeader } from '@/components/PowerfulHeader';
+import { AppSidebar } from '@/components/AppSidebar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { MVPHomeScreen } from '@/components/MVPHomeScreen';
 import { MVPDraftScreen } from '@/components/MVPDraftScreen';
 import { MVPExportScreen } from '@/components/MVPExportScreen';
@@ -1514,11 +1516,11 @@ export function MVPApp() {
               <MobileBottomToolbar
                 currentScreen={currentScreen}
                 onNavigate={handleNavigate}
-                isRecording={isRecording}
-                isProcessing={isProcessing}
-              />
-            </div>
+              isRecording={isRecording}
+              isProcessing={isProcessing}
+            />
           </div>
+        </div>
       </div>
 
       {/* Synthetic AI Assistant */}
@@ -1575,8 +1577,8 @@ export function MVPApp() {
         />
       )}
 
-      {/* Sign In Modal */}
-      <SignInModal
+        {/* Sign In Modal */}
+        <SignInModal
         isOpen={isSignInModalOpen}
         onClose={() => setIsSignInModalOpen(false)}
         onSignIn={handleSignIn}

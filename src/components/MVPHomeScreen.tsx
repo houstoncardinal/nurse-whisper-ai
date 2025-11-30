@@ -200,150 +200,152 @@ export function MVPHomeScreen({
             </div>
           </div>
 
-          {/* Desktop: 3-Column Grid */}
-          <div className="hidden lg:grid grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,0.6fr)] gap-8 max-w-full overflow-hidden">
+          {/* Desktop: Compact Vertical Layout */}
+          <div className="hidden lg:block space-y-6">
             
-            {/* LEFT: Note Type Selector */}
-            <Card className="p-8 min-w-0 max-w-full overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold text-foreground">Note Type</h3>
-                  <Badge variant="outline" className="text-xs">
-                    {templates.find(t => t.value === currentTemplate)?.category || 'Traditional'}
-                  </Badge>
-                </div>
-                
-                <Select value={currentTemplate} onValueChange={onTemplateChange}>
-                  <SelectTrigger className="w-full h-14 bg-background/50 border-border text-base">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templates.map((template) => (
-                      <SelectItem key={template.value} value={template.value}>
-                        {template.label}
-                      </SelectItem>
-                    ))
-                    }
-                  </SelectContent>
-                </Select>
-
-                <div className="pt-6 space-y-4 border-t border-border/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-success" />
-                    </div>
-                    <span className="text-sm font-medium text-foreground">HIPAA Compliant</span>
+            {/* Top Row: Note Type + Quick Stats */}
+            <div className="grid grid-cols-[1fr_320px] gap-6">
+              {/* Note Type Selector */}
+              <Card className="p-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Note Type</h3>
+                    <Badge variant="outline" className="text-xs">
+                      {templates.find(t => t.value === currentTemplate)?.category || 'Traditional'}
+                    </Badge>
                   </div>
+                  
+                  <Select value={currentTemplate} onValueChange={onTemplateChange}>
+                    <SelectTrigger className="w-full h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {templates.map((template) => (
+                        <SelectItem key={template.value} value={template.value}>
+                          {template.label}
+                        </SelectItem>
+                      ))
+                      }
+                    </SelectContent>
+                  </Select>
+
+                  <div className="flex items-center gap-6 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-success/10 flex items-center justify-center">
+                        <Shield className="w-4 h-4 text-success" />
+                      </div>
+                      <span className="text-sm font-medium">HIPAA Compliant</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Zap className="w-4 h-4 text-primary" />
+                      </div>
+                      <span className="text-sm font-medium">AI-Powered</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 text-accent" />
+                      </div>
+                      <span className="text-sm font-medium">Epic Compatible</span>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Quick Stats */}
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
+                <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-primary" />
+                      <Timer className="w-5 h-5 text-primary" />
                     </div>
-                    <span className="text-sm font-medium text-foreground">AI-Powered</span>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Time Saved</p>
+                      <p className="text-base font-bold">15 min/note</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-success" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">This Week</p>
+                      <p className="text-base font-bold">24 notes</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-                      <CheckCircle className="w-5 h-5 text-accent" />
+                      <TrendingUp className="w-5 h-5 text-accent" />
                     </div>
-                    <span className="text-sm font-medium text-foreground">Epic Compatible</span>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Accuracy</p>
+                      <p className="text-base font-bold">98%</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
 
-            {/* CENTER: Voice Recording */}
-            <Card className="p-10 min-w-0 max-w-full overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm">
-              <div className="flex flex-col items-center justify-center space-y-8 h-full">
-                <Button
-                  size="lg"
-                  onClick={isRecording ? onStopRecording : onStartRecording}
-                  disabled={isProcessing || !voiceSupported}
-                  className={`w-32 h-32 rounded-full transition-all shadow-2xl ${
-                    isRecording 
-                      ? 'bg-destructive hover:bg-destructive/90 animate-pulse shadow-destructive/30' 
-                      : 'bg-primary hover:bg-primary/90 shadow-primary/30'
-                  }`}
-                >
-                  {isRecording ? <MicOff className="w-12 h-12" /> : <Mic className="w-12 h-12" />}
-                </Button>
-                
-                <div className="text-center space-y-3">
-                  <p className="text-lg font-semibold text-foreground">
-                    {isRecording ? 'Recording...' : 'Start Recording'}
-                  </p>
-                  {isRecording && (
-                    <div className="flex items-center justify-center gap-2 text-base text-muted-foreground">
-                      <Clock className="w-5 h-5" />
-                      <span className="font-mono font-medium">
-                        {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
-                      </span>
-                    </div>
-                  )}
+            {/* Voice Recording Section */}
+            <Card className="p-8">
+              <div className="flex items-center justify-center gap-12">
+                <div className="flex flex-col items-center space-y-6">
+                  <Button
+                    size="lg"
+                    onClick={isRecording ? onStopRecording : onStartRecording}
+                    disabled={isProcessing || !voiceSupported}
+                    className={`w-28 h-28 rounded-full transition-all shadow-lg ${
+                      isRecording 
+                        ? 'bg-destructive hover:bg-destructive/90 animate-pulse shadow-destructive/20' 
+                        : 'bg-primary hover:bg-primary/90 shadow-primary/20'
+                    }`}
+                  >
+                    {isRecording ? <MicOff className="w-10 h-10" /> : <Mic className="w-10 h-10" />}
+                  </Button>
+                  
+                  <div className="text-center space-y-2">
+                    <p className="text-lg font-semibold">
+                      {isRecording ? 'Recording...' : 'Start Recording'}
+                    </p>
+                    {isRecording && (
+                      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="w-4 h-4" />
+                        <span className="font-mono font-medium">
+                          {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={() => setShowInputSelector(true)}
+                  >
+                    <Keyboard className="w-4 h-4 mr-2" />
+                    Type or Paste Instead
+                  </Button>
                 </div>
 
                 {visibleInterimTranscript && isRecording && (
-                  <div className="w-full max-w-md animate-fade-in">
-                    <p className="text-sm text-foreground/80 bg-muted/50 rounded-xl px-5 py-4 text-center">
-                      {visibleInterimTranscript}
-                    </p>
+                  <div className="flex-1 max-w-xl animate-fade-in">
+                    <div className="bg-muted/50 rounded-lg px-6 py-4">
+                      <p className="text-sm text-foreground/80">
+                        {visibleInterimTranscript}
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                {!voiceSupported && (
-                  <Alert className="w-full max-w-md">
+                {!voiceSupported && !visibleInterimTranscript && (
+                  <Alert className="max-w-md">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertDescription>
                       Voice recording not available in this browser
                     </AlertDescription>
                   </Alert>
                 )}
-
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setShowInputSelector(true)}
-                >
-                  <Keyboard className="w-4 h-4 mr-2" />
-                  Type or Paste Instead
-                </Button>
-              </div>
-            </Card>
-
-            {/* RIGHT: Quick Stats */}
-            <Card className="p-8 min-w-0 max-w-full overflow-hidden border-border/50 bg-card/80 backdrop-blur-sm">
-              <div className="space-y-6">
-                <h3 className="text-xl font-semibold text-foreground">Quick Stats</h3>
-                
-                <div className="space-y-5">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Timer className="w-6 h-6 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground">Time Saved</p>
-                      <p className="text-lg font-bold text-foreground">15 min/note</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-success/10 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-6 h-6 text-success" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground">This Week</p>
-                      <p className="text-lg font-bold text-foreground">24 notes</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center flex-shrink-0">
-                      <TrendingUp className="w-6 h-6 text-accent" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-muted-foreground">Accuracy</p>
-                      <p className="text-lg font-bold text-foreground">98%</p>
-                    </div>
-                  </div>
-                </div>
               </div>
             </Card>
           </div>

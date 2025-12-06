@@ -20,6 +20,10 @@ import { toast } from 'sonner';
 import { TemplateSelector } from './TemplateSelector';
 import { unifiedTemplateRegistry, UnifiedTemplate } from '@/lib/unifiedTemplates';
 import { supabase } from '@/integrations/supabase/client';
+import { redactPHI } from '@/lib/redaction';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Message {
   id: string;
@@ -255,9 +259,33 @@ export function RahaAIScreen({ onNavigate, currentContext = {} }: RahaAIScreenPr
     responses: string[];
   } | null>(null);
   const [userNotes, setUserNotes] = useState<UserNote[]>([]);
+  const [hipaaMode, setHipaaMode] = useState(true);
+  const [showHipaaConsent, setShowHipaaConsent] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Log AI interaction for HIPAA audit trail
+  const logAuditEvent = async (action: string, details: Record<string, any>) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase.from('audit_logs').insert({
+        user_id: user.id,
+        action: 'read' as const,
+        resource_type: 'ai_chat',
+        details: {
+          ...details,
+          action_type: action,
+          hipaa_mode: hipaaMode,
+          timestamp: new Date().toISOString()
+        }
+      });
+    } catch (err) {
+      console.error('Audit logging failed:', err);
+    }
+  };
 
   // Load user data
   useEffect(() => {
@@ -579,15 +607,40 @@ ${sections}
 - Med-Surg, ICU, NICU, Mother-Baby (Unit-Specific)`
         };
 
+        // HIPAA: Redact PHI before sending to AI
+        let processedInput = currentInput;
+        let redactionInfo = null;
+        if (hipaaMode) {
+          const result = redactPHI(currentInput, true);
+          processedInput = result.redactedText;
+          redactionInfo = result;
+          if (result.redactionCount > 0) {
+            toast.info(`🔒 ${result.redactionCount} PHI item(s) redacted for HIPAA compliance`);
+          }
+        }
+
+        // Log the AI interaction for audit trail
+        await logAuditEvent('ai_chat_request', {
+          message_length: currentInput.length,
+          phi_redacted: redactionInfo?.redactionCount || 0,
+          template: guidedWorkflow?.template || 'general'
+        });
+
         const { data, error } = await supabase.functions.invoke('chat', {
           body: {
-            messages: [...conversationHistory, { role: 'user', content: currentInput }],
+            messages: [...conversationHistory, { role: 'user', content: processedInput }],
             systemPrompt: systemPrompt.content
           }
         });
 
         if (error) throw error;
         const aiResponse = data?.content || "I'm here to help! What would you like to know?";
+
+        // Log the AI response for audit trail
+        await logAuditEvent('ai_chat_response', {
+          response_length: aiResponse.length,
+          template: guidedWorkflow?.template || 'general'
+        });
 
         setMessages(prev => {
           const filtered = prev.filter(m => !m.thinking);
@@ -654,6 +707,37 @@ ${sections}
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+      {/* HIPAA Compliance Banner */}
+      {showHipaaConsent && (
+        <Alert className="mx-4 mt-3 border-amber-200 bg-amber-50/80">
+          <Shield className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="flex items-center justify-between gap-4">
+            <span className="text-sm text-amber-800">
+              <strong>HIPAA Mode Active:</strong> All messages are automatically scanned for PHI and redacted before AI processing. Interactions are logged for compliance.
+            </span>
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="hipaa-mode"
+                  checked={hipaaMode}
+                  onCheckedChange={setHipaaMode}
+                  className="data-[state=checked]:bg-green-500"
+                />
+                <Label htmlFor="hipaa-mode" className="text-sm text-amber-700 cursor-pointer">PHI Redaction</Label>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowHipaaConsent(false)}
+                className="text-amber-600 hover:text-amber-800 h-8 px-2"
+              >
+                Dismiss
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Streamlined Header */}
       <div className="flex-shrink-0 px-4 lg:px-6 py-3 bg-white/95 backdrop-blur-xl border-b-2 border-gradient-to-r from-teal-500/20 via-blue-500/20 to-purple-500/20 shadow-sm">
         <div className="flex items-center justify-between">

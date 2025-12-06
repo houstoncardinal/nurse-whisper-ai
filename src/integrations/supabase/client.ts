@@ -2,26 +2,16 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_URL = "https://zupfyhboyykioxbokohv.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1cGZ5aGJveXlraW94Ym9rb2h2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0NDA4ODksImV4cCI6MjA4MDAxNjg4OX0.KrCfObya9G4BZspHEI2P57lqAXN6ybsCQmndqqYAbso";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-// Only create client if we have valid credentials
-// This prevents crashes during hot reload when env vars aren't loaded yet
-const hasValidCredentials = SUPABASE_URL && SUPABASE_PUBLISHABLE_KEY;
-
-export const supabase = hasValidCredentials 
-  ? createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-      auth: {
-        storage: localStorage,
-        persistSession: true,
-        autoRefreshToken: true,
-      }
-    })
-  : createClient<Database>(
-      'https://placeholder.supabase.co', 
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsYWNlaG9sZGVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE2NDUxOTI4MDAsImV4cCI6MTk2MDc2ODgwMH0.M1knsxz9nI6W8rRXdmQFEWvVEYKp7X4lmEGJXCNrfPs',
-      { auth: { storage: localStorage, persistSession: false, autoRefreshToken: false } }
-    );
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
+});

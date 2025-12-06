@@ -15,11 +15,11 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { openaiService } from '@/lib/openaiService';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { TemplateSelector } from './TemplateSelector';
 import { unifiedTemplateRegistry, UnifiedTemplate } from '@/lib/unifiedTemplates';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Message {
   id: string;
@@ -579,11 +579,15 @@ ${sections}
 - Med-Surg, ICU, NICU, Mother-Baby (Unit-Specific)`
         };
 
-        const aiResponse = await openaiService.chatCompletion([
-          systemPrompt,
-          ...conversationHistory,
-          { role: 'user', content: currentInput }
-        ]);
+        const { data, error } = await supabase.functions.invoke('chat', {
+          body: {
+            messages: [...conversationHistory, { role: 'user', content: currentInput }],
+            systemPrompt: systemPrompt.content
+          }
+        });
+
+        if (error) throw error;
+        const aiResponse = data?.content || "I'm here to help! What would you like to know?";
 
         setMessages(prev => {
           const filtered = prev.filter(m => !m.thinking);
